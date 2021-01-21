@@ -2,11 +2,14 @@ export {
   serve,
   Server,
   ServerRequest,
-} from "https://deno.land/std@0.83.0/http/mod.ts";
+  Status,
+} from "https://deno.land/std@0.84.0/http/mod.ts";
 
 export type {
   HTTPOptions,
   Response,
-} from "https://deno.land/std@0.83.0/http/mod.ts";
+} from "https://deno.land/std@0.84.0/http/mod.ts";
 
-export { decode, encode } from "https://deno.land/std@0.83.0/encoding/utf8.ts";
+export { decode, encode } from "https://deno.land/std@0.84.0/encoding/utf8.ts";
+
+export { MultipartReader } from "https://deno.land/std@0.84.0/mime/mod.ts";

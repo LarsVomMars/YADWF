@@ -1,8 +1,8 @@
 import { Handler } from "./app.ts";
 import { Context } from "./context.ts";
+import { Status } from "./deps.ts";
 
 export class Router {
-  // Method => Node[]
   #handler: Array<Array<Node>>;
 
   constructor() {
@@ -20,7 +20,7 @@ export class Router {
     if (paths.length >= 1) {
       return paths[0].handler;
     } else {
-      return (c: Context) => c.text("404 Not found", 404);
+      return (c: Context) => c.text("404 Not found", Status.NotFound);
     }
   }
 }

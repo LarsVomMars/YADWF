@@ -71,4 +71,12 @@ export class Application {
     this.#router.add(Method.HEAD, path, handler);
     return this;
   }
+
+  any(path: string, handler: Handler): Application {
+    const methods = Object.values(Method).filter((n) => typeof n === "number");
+    for (const method of methods) {
+      this.#router.add(method as Method, path, handler);
+    }
+    return this;
+  }
 }
