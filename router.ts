@@ -3,31 +3,94 @@ import { Context } from "./context.ts";
 import { Status } from "./deps.ts";
 
 export class Router {
-  #handler: Array<Array<Node>>;
+  private readonly root: Node;
 
   constructor() {
-    this.#handler = [];
-    for (const e of HTTPMethods) this.#handler.push([]);
+    this.root = new Node();
   }
 
   add(method: Method, path: string, handler: Handler) {
-    if (!path.startsWith("/")) path = "/" + path;
-    this.#handler[method].push({ path, handler });
+    // TODO: Wildcard matching using *
+    // TODO: Named routes :name -> ctx.params.name
+    const paths = path.split("/");
+    this.root.add(paths, method, handler);
   }
 
   find(method: Method, path: string): Handler {
-    const paths = this.#handler[method].filter((node) => node.path === path);
-    if (paths.length >= 1) {
-      return paths[0].handler;
-    } else {
-      return (c: Context) => c.text("404 Not found", Status.NotFound);
-    }
+    const paths = path.split("/").slice(1);
+    const handler = this.root.find(paths, method);
+    return (
+      handler || ((c: Context) => c.text("404 Not found", Status.NotFound))
+    );
   }
 }
 
-export interface Node {
-  path: string;
-  handler: Handler;
+export class Node {
+  private readonly subnodes: Node[];
+  private readonly handlers: PathHandler[];
+  private readonly path: string;
+
+  constructor(path = "") {
+    this.subnodes = [];
+    this.handlers = [];
+    this.path = path;
+  }
+
+  add(path: string[], method: Method, handler: Handler) {
+    if (path.length > 1) {
+      const curPath = path.shift();
+      for (const node of this.subnodes) {
+        if (node.check(curPath!)) {
+          node.add(path, method, handler);
+          return;
+        }
+      }
+      const node = new Node(curPath);
+      node.add(path, method, handler);
+      this.subnodes.push(node);
+    } else {
+      this.handlers.push(new PathHandler(path[0], method, handler));
+    }
+  }
+
+  find(path: string[], method: Method): Handler | undefined {
+    if (path.length > 1) {
+      const curPath = path.shift();
+      for (const node of this.subnodes) {
+        if (node.check(curPath!)) {
+          return node.find(path, method);
+        }
+      }
+      return;
+    } else {
+      for (const handler of this.handlers) {
+        if (handler.check(path[0], method)) {
+          return handler.get();
+        }
+      }
+      return;
+    }
+  }
+
+  check(path: string): boolean {
+    return this.path === path;
+  }
+}
+
+export class PathHandler {
+  constructor(
+    private readonly path: string,
+    private readonly method: Method,
+    private readonly handler: Handler,
+  ) {}
+
+  check(path: string, method: Method): boolean {
+    return this.path === path && this.method === method;
+  }
+
+  get(): Handler {
+    return this.handler;
+  }
 }
 
 export enum Method {

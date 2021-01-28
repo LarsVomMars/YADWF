@@ -1,6 +1,18 @@
-import { Response, ServerRequest, Status } from "./deps.ts";
-import { decode, encode } from "./deps.ts";
-import { MultipartReader } from "./deps.ts";
+import {
+  Cookie,
+  Cookies,
+  decode,
+  deleteCookie,
+  encode,
+  getCookies,
+  join,
+  MultipartReader,
+  Response,
+  ServerRequest,
+  setCookie,
+  Status,
+} from "./deps.ts";
+import { getContentType } from "./mimetypes.ts";
 
 export class Context {
   #request: ServerRequest;
@@ -28,6 +40,14 @@ export class Context {
 
   get path(): string {
     return this.#url.pathname;
+  }
+
+  get protocol(): string {
+    return this.#request.proto;
+  }
+
+  get cookies(): Cookies {
+    return getCookies(this.#request);
   }
 
   get query(): Record<string, string | string[]> {
@@ -85,6 +105,20 @@ export class Context {
     }
   }
 
+  setCookie(cookie: Cookie) {
+    setCookie(this.#response, cookie);
+  }
+
+  deleteCookie(name: string) {
+    deleteCookie(this.#response, name);
+  }
+
+  blob(blob: Uint8Array, contentType: string, code = Status.OK) {
+    this.#response.status = code;
+    this.#response.headers?.append("Content-Type", contentType);
+    this.#response.body = blob;
+  }
+
   text(text: string, code = Status.OK) {
     this.#response.status = code;
     this.#response.body = encode(text);
@@ -101,5 +135,20 @@ export class Context {
       "Content-Type",
       "application/json;charset=UTF-8",
     );
+  }
+
+  redirect(url: string, code = Status.Found) {
+    this.#response.status = code;
+    this.#response.headers?.append("Location", url);
+  }
+
+  async file(path: string, code = Status.OK) {
+    try {
+      path = join(Deno.cwd(), path);
+      const file = await Deno.readFile(path);
+      this.blob(file, getContentType(path), code);
+    } catch (e) {
+      return this.text("404 Not found", Status.NotFound);
+    }
   }
 }
