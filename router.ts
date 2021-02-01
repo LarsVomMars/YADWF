@@ -12,7 +12,8 @@ export class Router {
   add(method: Method, path: string, handler: Handler) {
     // TODO: Wildcard matching using *
     // TODO: Named routes :name -> ctx.params.name
-    const paths = path.split("/");
+    if (!path.startsWith("/")) path = `/${path}`;
+    const paths = path.split("/").slice(1);
     this.root.add(paths, method, handler);
   }
 
@@ -28,12 +29,10 @@ export class Router {
 export class Node {
   private readonly subnodes: Node[];
   private readonly handlers: PathHandler[];
-  private readonly path: string;
 
-  constructor(path = "") {
+  constructor(private readonly path = "") {
     this.subnodes = [];
     this.handlers = [];
-    this.path = path;
   }
 
   add(path: string[], method: Method, handler: Handler) {
@@ -55,9 +54,9 @@ export class Node {
 
   find(path: string[], method: Method): Handler | undefined {
     if (path.length > 1) {
-      const curPath = path.shift();
+      const curPath = path.shift()!;
       for (const node of this.subnodes) {
-        if (node.check(curPath!)) {
+        if (node.check(curPath)) {
           return node.find(path, method);
         }
       }
@@ -73,7 +72,7 @@ export class Node {
   }
 
   check(path: string): boolean {
-    return this.path === path;
+    return this.path === path || this.path === "*";
   }
 }
 
@@ -81,11 +80,11 @@ export class PathHandler {
   constructor(
     private readonly path: string,
     private readonly method: Method,
-    private readonly handler: Handler,
+    private readonly handler: Handler
   ) {}
 
   check(path: string, method: Method): boolean {
-    return this.path === path && this.method === method;
+    return (this.path === path || this.path === "*") && this.method === method;
   }
 
   get(): Handler {

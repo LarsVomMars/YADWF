@@ -1,7 +1,7 @@
 import { HTTPOptions, serve, Server } from "./deps.ts";
 import { Context } from "./context.ts";
 import { HTTPMethods, Method, Router } from "./router.ts";
-import { format, log } from "./deps.ts";
+import { format, log, join } from "./deps.ts";
 
 export type Handler = (c: Context) => Promise<void> | void;
 
@@ -18,13 +18,13 @@ export class Application {
     for await (const req of this.#server) {
       const c = new Context(req);
       log.info(
-        `[${
-          format(new Date(Date.now()), "MM-dd-yyyy HH:mm:ss")
-        }] ${c.protocol} ${c.method} ${c.path}`,
+        `[${format(new Date(Date.now()), "MM-dd-yyyy HH:mm:ss")}] ${
+          c.protocol
+        } ${c.method} ${c.path}`
       );
       const hdl = this.#router.find(
         HTTPMethods.indexOf(c.method) as Method,
-        c.path,
+        c.path
       );
       await hdl(c);
       req.respond(c.response);
@@ -33,9 +33,10 @@ export class Application {
 
   start(options: HTTPOptions) {
     log.info(
-      `[${
-        format(new Date(Date.now()), "MM-dd-yyyy HH:mm:ss")
-      }] Server started: http://localhost:${options.port}`,
+      `[${format(
+        new Date(Date.now()),
+        "MM-dd-yyyy HH:mm:ss"
+      )}] Server started: http://localhost:${options.port}`
     );
     this.startServer(serve(options));
   }
@@ -98,12 +99,16 @@ export class Application {
   }
 
   file(path: string, file: string): Application {
-    this.#router.add(Method.GET, path, (c) => c.file(file));
+    this.#router.add(Method.GET, path, async (c) => await c.file(file));
     return this;
   }
 
   static(path: string, directory: string): Application {
-    // TODO: Read all files from directory
+    if (!path.endsWith("/")) path += "/";
+    this.#router.add(Method.GET, `${path}*`, async (c) => {
+      const file = c.path.substring(path.length);
+      return await c.file(join(directory, file));
+    });
     return this;
   }
 }

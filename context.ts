@@ -92,11 +92,9 @@ export class Context {
       return {};
     } else if (contentType?.includes("application/x-www-form-urlencoded")) {
       const query: Record<string, string> = {};
-      for (
-        const [key, value] of new URLSearchParams(
-          decode(await Deno.readAll(this.#request.body)),
-        )
-      ) {
+      for (const [key, value] of new URLSearchParams(
+        decode(await Deno.readAll(this.#request.body))
+      )) {
         query[key] = value;
       }
       return query;
@@ -133,7 +131,7 @@ export class Context {
     this.#response.body = encode(obj as string);
     this.#response.headers?.append(
       "Content-Type",
-      "application/json;charset=UTF-8",
+      "application/json;charset=UTF-8"
     );
   }
 
