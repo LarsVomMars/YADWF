@@ -13,15 +13,15 @@ export class Router {
     // TODO: Named routes :name -> ctx.params.name
     if (!path.startsWith("/")) path = `/${path}`;
     const paths = path.split("/").slice(1);
+    if (path.endsWith("/")) paths.pop();
     this.root.add(paths, method, handler);
   }
 
   find(method: Method, path: string): Handler {
     const paths = path.split("/").slice(1);
+    if (path.endsWith("/")) paths.pop();
     const handler = this.root.find(paths, method);
-    return (
-      handler || ((c: Context) => c.text("404 Not found", Status.NotFound))
-    );
+    return handler || NotFoundHandler;
   }
 }
 
@@ -54,19 +54,11 @@ export class Node {
   find(path: string[], method: Method): Handler | undefined {
     if (path.length > 1) {
       const curPath = path.shift()!;
-      for (const node of this.subnodes) {
-        if (node.check(curPath)) {
-          return node.find(path, method);
-        }
-      }
-      return;
+      const node = this.subnodes.find((node) => node.check(curPath));
+      return node?.find(path, method);
     } else {
-      for (const handler of this.handlers) {
-        if (handler.check(path[0], method)) {
-          return handler.get();
-        }
-      }
-      return;
+      const handler = this.handlers.find((hdl) => hdl.check(path[0], method));
+      return handler?.get();
     }
   }
 
@@ -114,3 +106,6 @@ export const HTTPMethods = [
   "TRACE",
   "PATCH",
 ];
+
+export const NotFoundHandler = (c: Context) =>
+  c.text("404 Not found", Status.NotFound);
