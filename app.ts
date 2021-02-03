@@ -10,6 +10,7 @@ import {
 } from "./deps.ts";
 
 export type Handler = (c: Context) => Promise<void> | void;
+export type Middleware = (next: Handler) => Handler;
 
 export class Application {
   #server?: Server;
@@ -33,6 +34,26 @@ export class Application {
     }
   }
 
+  private applyMiddleware(
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Handler {
+    for (const middleware of middlewares) {
+      handler = middleware(handler);
+    }
+    return handler;
+  }
+
+  private addPath(
+    path: string,
+    method: Method,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ) {
+    handler = this.applyMiddleware(handler, ...middlewares);
+    this.#router.add(method, path, handler);
+  }
+
   start(options: HTTPOptions) {
     log.info(`Server started: http://localhost:${options.port}`);
     this.startServer(serve(options));
@@ -42,70 +63,121 @@ export class Application {
     this.#server?.close();
   }
 
-  get(path: string, handler: Handler): Application {
-    this.#router.add(Method.GET, path, handler);
+  get(
+    path: string,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Application {
+    this.addPath(path, Method.GET, handler, ...middlewares);
     return this;
   }
 
-  post(path: string, handler: Handler): Application {
-    this.#router.add(Method.POST, path, handler);
+  post(
+    path: string,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Application {
+    this.addPath(path, Method.POST, handler, ...middlewares);
     return this;
   }
 
-  put(path: string, handler: Handler): Application {
-    this.#router.add(Method.PUT, path, handler);
+  put(
+    path: string,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Application {
+    this.addPath(path, Method.PUT, handler, ...middlewares);
     return this;
   }
 
-  delete(path: string, handler: Handler): Application {
-    this.#router.add(Method.DELETE, path, handler);
+  delete(
+    path: string,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Application {
+    this.addPath(path, Method.DELETE, handler, ...middlewares);
     return this;
   }
 
-  trace(path: string, handler: Handler): Application {
-    this.#router.add(Method.TRACE, path, handler);
+  trace(
+    path: string,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Application {
+    this.addPath(path, Method.TRACE, handler, ...middlewares);
     return this;
   }
 
-  options(path: string, handler: Handler): Application {
-    this.#router.add(Method.OPTIONS, path, handler);
+  options(
+    path: string,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Application {
+    this.addPath(path, Method.OPTIONS, handler, ...middlewares);
     return this;
   }
 
-  patch(path: string, handler: Handler): Application {
-    this.#router.add(Method.PATCH, path, handler);
+  patch(
+    path: string,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Application {
+    this.addPath(path, Method.PATCH, handler, ...middlewares);
     return this;
   }
 
-  connect(path: string, handler: Handler): Application {
-    this.#router.add(Method.CONNECT, path, handler);
+  connect(
+    path: string,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Application {
+    this.addPath(path, Method.CONNECT, handler, ...middlewares);
     return this;
   }
 
-  head(path: string, handler: Handler): Application {
-    this.#router.add(Method.HEAD, path, handler);
+  head(
+    path: string,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Application {
+    this.addPath(path, Method.HEAD, handler, ...middlewares);
     return this;
   }
 
-  any(path: string, handler: Handler): Application {
+  any(
+    path: string,
+    handler: Handler,
+    ...middlewares: Middleware[]
+  ): Application {
     const methods = Object.values(Method).filter((n) => typeof n === "number");
     for (const method of methods) {
-      this.#router.add(method as Method, path, handler);
+      this.addPath(path, method as Method, handler, ...middlewares);
     }
     return this;
   }
 
-  file(path: string, file: string): Application {
-    this.#router.add(Method.GET, path, async (c) => await c.file(file));
+  file(path: string, file: string, ...middlewares: Middleware[]): Application {
+    this.addPath(
+      path,
+      Method.GET,
+      async (c) => await c.file(file),
+      ...middlewares,
+    );
     return this;
   }
 
-  static(path: string, directory: string): Application {
+  static(
+    path: string,
+    directory: string,
+    ...middlewares: Middleware[]
+  ): Application {
     if (!path.endsWith("/")) path += "/";
-    this.#router.add(Method.GET, `${path}*`, async (c) => {
+    const hdl = async (c: Context) => {
       const file = c.path.substring(path.length);
+      if (file.length === 0) return await c.file(join(directory, "index.html"));
       return await c.file(join(directory, file));
-    });
+    };
+    this.addPath(`${path}*`, Method.GET, hdl, ...middlewares);
     return this;
   }
 }
