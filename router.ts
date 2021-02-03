@@ -10,7 +10,6 @@ export class Router {
   }
 
   add(method: Method, path: string, handler: Handler) {
-    // TODO: Wildcard matching using *
     // TODO: Named routes :name -> ctx.params.name
     if (!path.startsWith("/")) path = `/${path}`;
     const paths = path.split("/").slice(1);
@@ -80,7 +79,7 @@ export class PathHandler {
   constructor(
     private readonly path: string,
     private readonly method: Method,
-    private readonly handler: Handler
+    private readonly handler: Handler,
   ) {}
 
   check(path: string, method: Method): boolean {

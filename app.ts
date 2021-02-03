@@ -1,7 +1,13 @@
-import { HTTPOptions, serve, Server } from "./deps.ts";
 import { Context } from "./context.ts";
 import { HTTPMethods, Method, Router } from "./router.ts";
-import { format, log, join } from "./deps.ts";
+import {
+  format as timeFormat,
+  HTTPOptions,
+  join,
+  log,
+  serve,
+  Server,
+} from "./deps.ts";
 
 export type Handler = (c: Context) => Promise<void> | void;
 
@@ -17,14 +23,10 @@ export class Application {
     this.#server = server;
     for await (const req of this.#server) {
       const c = new Context(req);
-      log.info(
-        `[${format(new Date(Date.now()), "MM-dd-yyyy HH:mm:ss")}] ${
-          c.protocol
-        } ${c.method} ${c.path}`
-      );
+      log.info(`${c.protocol} ${c.method} ${c.path}`);
       const hdl = this.#router.find(
         HTTPMethods.indexOf(c.method) as Method,
-        c.path
+        c.path,
       );
       await hdl(c);
       req.respond(c.response);
@@ -32,12 +34,7 @@ export class Application {
   }
 
   start(options: HTTPOptions) {
-    log.info(
-      `[${format(
-        new Date(Date.now()),
-        "MM-dd-yyyy HH:mm:ss"
-      )}] Server started: http://localhost:${options.port}`
-    );
+    log.info(`Server started: http://localhost:${options.port}`);
     this.startServer(serve(options));
   }
 
@@ -112,3 +109,23 @@ export class Application {
     return this;
   }
 }
+
+await log.setup({
+  handlers: {
+    timeHandler: new log.handlers.ConsoleHandler("INFO", {
+      formatter: (logRecord) =>
+        `[${
+          timeFormat(
+            new Date(Date.now()),
+            "MM-dd-yyyy HH:mm:ss",
+          )
+        }] ${logRecord.msg}`,
+    }),
+  },
+  loggers: {
+    default: {
+      level: "INFO",
+      handlers: ["timeHandler"],
+    },
+  },
+});
