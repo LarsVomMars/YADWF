@@ -1,6 +1,5 @@
 import {
   Cookie,
-  Cookies,
   decode,
   deleteCookie,
   encode,
@@ -13,6 +12,8 @@ import {
   Status,
 } from "./deps.ts";
 import { getContentType } from "./mimetypes.ts";
+
+export type Cookies = Record<string, Cookie>;
 
 export class Context {
   readonly #request: ServerRequest;
