@@ -63,7 +63,7 @@ export class Node {
   }
 
   check(path: string): boolean {
-    return this.path === path || this.path === "*";
+    return this.path === path;
   }
 }
 
@@ -75,7 +75,7 @@ export class PathHandler {
   ) {}
 
   check(path: string, method: Method): boolean {
-    return (this.path === path || this.path === "*") && this.method === method;
+    return (this.path === path) && this.method === method;
   }
 
   get(): Handler {
