@@ -10,6 +10,7 @@ export class Router {
   }
 
   add(method: Method, path: string, handler: Handler) {
+    // TODO: Redo dynamic route matching while checking for follow-up path
     // TODO: Named routes :name -> ctx.params.name
     if (!path.startsWith("/")) path = `/${path}`;
     const paths = path.split("/").slice(1);
@@ -18,10 +19,11 @@ export class Router {
   }
 
   find(method: Method, path: string): Handler {
+    if (!path.startsWith("/")) path = `/${path}`;
     const paths = path.split("/").slice(1);
     if (path.endsWith("/")) paths.pop();
     const handler = this.root.find(paths, method);
-    return handler || NotFoundHandler;
+    return handler ?? NotFoundHandler;
   }
 }
 
@@ -54,16 +56,40 @@ export class Node {
   find(path: string[], method: Method): Handler | undefined {
     if (path.length > 1) {
       const curPath = path.shift()!;
-      const node = this.subnodes.find((node) => node.check(curPath));
-      return node?.find(path, method);
+      const searchNode = this.subnodes.find((node) => node.check(curPath));
+      if (searchNode) return searchNode.find(path, method);
+      // Wildcard matching
+      for (const node of this.subnodes) {
+        if (node.isWildcard()) {
+          const subnode = node.find(path, method);
+          if (subnode) return subnode;
+        }
+      }
+      // Searches for wildcard handler if no subnode is found
+      for (const hdl of this.handlers) {
+        if (hdl.isWildcard()) {
+          return hdl.get();
+        }
+      }
+      return;
     } else {
       const handler = this.handlers.find((hdl) => hdl.check(path[0], method));
-      return handler?.get();
+      if (handler) return handler.get();
+      for (const hdl of this.handlers) {
+        if (hdl.isWildcard()) {
+          return hdl.get();
+        }
+      }
+      return;
     }
   }
 
   check(path: string): boolean {
     return this.path === path;
+  }
+
+  isWildcard(): boolean {
+    return this.path === "*";
   }
 }
 
@@ -75,7 +101,11 @@ export class PathHandler {
   ) {}
 
   check(path: string, method: Method): boolean {
-    return (this.path === path) && this.method === method;
+    return this.path === path && this.method === method;
+  }
+
+  isWildcard(): boolean {
+    return this.path === "*";
   }
 
   get(): Handler {

@@ -171,7 +171,7 @@ export class Application {
     directory: string,
     ...middlewares: Middleware[]
   ): Application {
-    // TODO: Fix recursive directories and stuff
+    // TODO: Fallback handler if file does not exist
     if (!path.endsWith("/")) path += "/";
     const hdl = async (c: Context) => {
       const file = c.path.substring(path.length);
