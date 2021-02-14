@@ -29,7 +29,11 @@ export class Application {
         HTTPMethods.indexOf(c.method) as Method,
         c.path,
       );
-      await hdl(c);
+      try {
+        await hdl(c);
+      } catch (e) {
+        log.error(e);
+      }
       req.respond(c.response);
     }
   }

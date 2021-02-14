@@ -10,7 +10,6 @@ export class Router {
   }
 
   add(method: Method, path: string, handler: Handler) {
-    // TODO: Redo dynamic route matching while checking for follow-up path
     // TODO: Named routes :name -> ctx.params.name
     if (!path.startsWith("/")) path = `/${path}`;
     const paths = path.split("/").slice(1);
