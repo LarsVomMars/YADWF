@@ -13,7 +13,7 @@ import {
 } from "./deps.ts";
 import { getContentType } from "./mimetypes.ts";
 
-export type Cookies = Record<string, Cookie>;
+export type Cookies = Record<string, string>;
 
 export class Context {
   readonly #request: ServerRequest;

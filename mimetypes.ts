@@ -20,5 +20,5 @@ export const extensions: Record<string, string> = {
   ".png": `image/png`,
   ".pdf": `application/pdf;${utf8}`,
   ".svg": `image/svg+xml`,
-  ".json": `application/json`,
+  ".json": `application/json;${utf8}`,
 };

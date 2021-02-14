@@ -171,6 +171,7 @@ export class Application {
     directory: string,
     ...middlewares: Middleware[]
   ): Application {
+    // TODO: Fix recursive directories and stuff
     if (!path.endsWith("/")) path += "/";
     const hdl = async (c: Context) => {
       const file = c.path.substring(path.length);
@@ -187,10 +188,7 @@ await log.setup({
     timeHandler: new log.handlers.ConsoleHandler("INFO", {
       formatter: (logRecord) =>
         `[${
-          timeFormat(
-            new Date(Date.now()),
-            "MM-dd-yyyy HH:mm:ss",
-          )
+          timeFormat(new Date(Date.now()), "MM-dd-yyyy HH:mm:ss")
         }] ${logRecord.msg}`,
     }),
   },
