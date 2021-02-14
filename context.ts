@@ -20,11 +20,13 @@ export class Context {
   readonly #response: Response;
   readonly #url: URL;
   #body?: Promise<Record<string, unknown>>;
+  params: Record<string, string>;
 
   constructor(request: ServerRequest) {
     this.#request = request;
     this.#response = { headers: new Headers() };
     this.#url = new URL(this.#request.url, "http://0.0.0.0");
+    this.params = {};
   }
 
   get response(): Response {

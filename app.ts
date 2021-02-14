@@ -25,12 +25,13 @@ export class Application {
     for await (const req of this.#server) {
       const c = new Context(req);
       log.info(`${c.protocol} ${c.method} ${c.path}`);
-      const hdl = this.#router.find(
+      const { handler, params } = this.#router.find(
         HTTPMethods.indexOf(c.method) as Method,
         c.path,
       );
+      c.params = params; // Named parameters
       try {
-        await hdl(c);
+        await handler(c);
       } catch (e) {
         log.error(e);
       }

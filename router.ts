@@ -11,24 +11,26 @@ export class Router {
 
   add(method: Method, path: string, handler: Handler) {
     // TODO: Named routes :name -> ctx.params.name
+    // TODO: Param as wildcard with extra class var
     if (!path.startsWith("/")) path = `/${path}`;
     const paths = path.split("/").slice(1);
     if (path.endsWith("/")) paths.pop();
     this.root.add(paths, method, handler);
   }
 
-  find(method: Method, path: string): Handler {
+  find(method: Method, path: string): RouterResult {
     if (!path.startsWith("/")) path = `/${path}`;
     const paths = path.split("/").slice(1);
     if (path.endsWith("/")) paths.pop();
-    const handler = this.root.find(paths, method);
-    return handler ?? NotFoundHandler;
+    const result = this.root.find(paths, method);
+    return result ?? { handler: NotFoundHandler, params: {} };
   }
 }
 
 export class Node {
   private readonly subnodes: Node[];
   private readonly handlers: PathHandler[];
+  private name?: string;
 
   constructor(private readonly path = "") {
     this.subnodes = [];
@@ -37,9 +39,13 @@ export class Node {
 
   add(path: string[], method: Method, handler: Handler) {
     if (path.length > 1) {
-      const curPath = path.shift();
+      let curPath = path.shift()!;
+      if (curPath.startsWith(":")) {
+        this.name = curPath.slice(1);
+        curPath = "*";
+      }
       for (const node of this.subnodes) {
-        if (node.check(curPath!)) {
+        if (node.check(curPath)) {
           node.add(path, method, handler);
           return;
         }
@@ -52,7 +58,8 @@ export class Node {
     }
   }
 
-  find(path: string[], method: Method): Handler | undefined {
+  find(path: string[], method: Method): RouterResult | undefined {
+    // TODO: Get current named parameter
     if (path.length > 1) {
       const curPath = path.shift()!;
       const searchNode = this.subnodes.find((node) => node.check(curPath));
@@ -61,22 +68,26 @@ export class Node {
       for (const node of this.subnodes) {
         if (node.isWildcard()) {
           const subnode = node.find(path, method);
-          if (subnode) return subnode;
+          if (subnode) {
+            if (this.name) subnode.params[this.name] = curPath;
+            return subnode;
+          }
         }
       }
       // Searches for wildcard handler if no subnode is found
       for (const hdl of this.handlers) {
         if (hdl.isWildcard()) {
-          return hdl.get();
+          return hdl.get(curPath);
         }
       }
       return;
     } else {
-      const handler = this.handlers.find((hdl) => hdl.check(path[0], method));
-      if (handler) return handler.get();
+      const curPath = path[0];
+      const handler = this.handlers.find((hdl) => hdl.check(curPath, method));
+      if (handler) return handler.get(curPath);
       for (const hdl of this.handlers) {
         if (hdl.isWildcard()) {
-          return hdl.get();
+          return hdl.get(curPath);
         }
       }
       return;
@@ -93,11 +104,17 @@ export class Node {
 }
 
 export class PathHandler {
+  private name?: string;
   constructor(
     private readonly path: string,
     private readonly method: Method,
     private readonly handler: Handler,
-  ) {}
+  ) {
+    if (this.path.startsWith(":")) {
+      this.name = this.path.slice(1);
+      this.path = "*";
+    }
+  }
 
   check(path: string, method: Method): boolean {
     return this.path === path && this.method === method;
@@ -107,8 +124,10 @@ export class PathHandler {
     return this.path === "*";
   }
 
-  get(): Handler {
-    return this.handler;
+  get(path: string): RouterResult {
+    const params: Record<string, string> = {};
+    if (this.name) params[this.name] = path;
+    return { handler: this.handler, params };
   }
 }
 
@@ -136,5 +155,10 @@ export const HTTPMethods = [
   "PATCH",
 ];
 
-export const NotFoundHandler = (c: Context) =>
+export interface RouterResult {
+  handler: Handler;
+  params: Record<string, string>;
+}
+
+export const NotFoundHandler: Handler = (c: Context) =>
   c.text("404 Not found", Status.NotFound);
