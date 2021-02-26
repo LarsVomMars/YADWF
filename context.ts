@@ -1,8 +1,6 @@
 import {
   Cookie,
-  decode,
   deleteCookie,
-  encode,
   getCookies,
   join,
   MultipartReader,
@@ -77,9 +75,10 @@ export class Context {
 
   private async readRequestBody(): Promise<Record<string, unknown>> {
     const contentType = this.#request.headers.get("Content-Type");
+    const decoder = new TextDecoder();
 
     if (contentType?.includes("application/json")) {
-      return JSON.parse(decode(await Deno.readAll(this.#request.body)));
+      return JSON.parse(decoder.decode(await Deno.readAll(this.#request.body)));
     } else if (contentType?.includes("multipart/form-data")) {
       const match = contentType.match(/boundary=([^\s]+)/);
       const boundary = match ? match[1] : undefined;
@@ -97,7 +96,7 @@ export class Context {
       const query: Record<string, string> = {};
       for (
         const [key, value] of new URLSearchParams(
-          decode(await Deno.readAll(this.#request.body)),
+          decoder.decode(await Deno.readAll(this.#request.body)),
         )
       ) {
         query[key] = value;
@@ -124,7 +123,7 @@ export class Context {
 
   text(text: string, code = Status.OK) {
     this.#response.status = code;
-    this.#response.body = encode(text);
+    this.#response.body = new TextEncoder().encode(text);
     this.#response.headers?.append("Content-Type", "text/plain;charset=UTF-8");
   }
 
@@ -133,7 +132,7 @@ export class Context {
     if (typeof obj === "object") {
       obj = JSON.stringify(obj);
     }
-    this.#response.body = encode(obj as string);
+    this.#response.body = new TextEncoder().encode(obj as string);
     this.#response.headers?.append(
       "Content-Type",
       "application/json;charset=UTF-8",
