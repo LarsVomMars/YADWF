@@ -74,12 +74,6 @@ export class Node {
           }
         }
       }
-      // Searches for wildcard handler if no subnode is found
-      for (const hdl of this.handlers) {
-        if (hdl.isWildcard()) {
-          return hdl.get(curPath);
-        }
-      }
       return;
     } else {
       const curPath = path[0];
