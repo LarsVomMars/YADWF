@@ -5,9 +5,11 @@ import {
   HTTPOptions,
   join,
   log,
+  sep,
   serve,
   Server,
 } from "./deps.ts";
+import { getNestedDirectories } from "./util.ts";
 
 export type Handler = (c: Context) => Promise<void> | void;
 export type Middleware = (next: Handler) => Handler;
@@ -176,18 +178,31 @@ export class Application {
     directory: string,
     ...middlewares: Middleware[]
   ): Application {
-    // TODO: Fallback handler if file does not exist
     if (!path.endsWith("/")) path += "/";
-    const hdl = async (c: Context) => {
-      const file = c.path.substring(path.length);
-      if (file.length === 0) return await c.file(join(directory, "index.html"));
-      return await c.file(join(directory, file));
-    };
-    this.addPath(`${path}*`, Method.GET, hdl, ...middlewares);
+    (async () => {
+      const directories = await getNestedDirectories(directory);
+      directories.push("");
+      for (const dir of directories) {
+        const hdl = async (c: Context) => {
+          const file = c.path.substring(join(path, dir, sep).length);
+          if (file.length === 0) {
+            return await c.file(join(directory, dir, "index.html"));
+          }
+          return await c.file(join(directory, dir, file));
+        };
+        this.addPath(
+          `${path + dir}/*`.replace(/\/+/, "/"),
+          Method.GET,
+          hdl,
+          ...middlewares,
+        );
+      }
+    })();
     return this;
   }
 }
 
+// Logging
 await log.setup({
   handlers: {
     timeHandler: new log.handlers.ConsoleHandler("INFO", {

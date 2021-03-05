@@ -98,7 +98,7 @@ export class Node {
 }
 
 export class PathHandler {
-  private name?: string;
+  private readonly name?: string;
   constructor(
     private readonly path: string,
     private readonly method: Method,
