@@ -2,10 +2,7 @@ import { extname } from "./deps.ts";
 
 export function getContentType(filename: string): string {
   const extension = extname(filename);
-  if (!Object.keys(extensions).includes(extension) || !extension) {
-    return "application/octet-stream";
-  }
-  return extensions[extension];
+  return extensions[extension] || "application/octet-stream";
 }
 
 export const utf8 = "charset=UTF-8";

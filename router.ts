@@ -104,7 +104,7 @@ export class PathHandler {
     private readonly method: Method,
     private readonly handler: Handler,
   ) {
-    if (this.path.startsWith(":")) {
+    if (this.path && this.path.startsWith(":")) {
       this.name = this.path.slice(1);
       this.path = "*";
     }
@@ -154,5 +154,5 @@ export interface RouterResult {
   params: Record<string, string>;
 }
 
-export const NotFoundHandler: Handler = (c: Context) =>
-  c.text("404 Not found", Status.NotFound);
+export const NotFoundHandler: Handler = (ctx: Context) =>
+  ctx.text("404 Not found", Status.NotFound);

@@ -11,10 +11,10 @@ import {
 } from "./deps.ts";
 import { getNestedDirectories } from "./util.ts";
 
-export type Handler = (c: Context) => Promise<void> | void;
+export type Handler = (ctx: Context) => Promise<void> | void;
 export type Middleware = (next: Handler) => Handler;
 
-export class Application {
+export class YADWF {
   #server?: Server;
   #router: Router;
 
@@ -25,19 +25,19 @@ export class Application {
   private async startServer(server: Server) {
     this.#server = server;
     for await (const req of this.#server) {
-      const c = new Context(req);
-      log.info(`${c.protocol} ${c.method} ${c.path}`);
+      const ctx = new Context(req);
+      log.info(`${ctx.protocol} ${ctx.method} ${ctx.path}`);
       const { handler, params } = this.#router.find(
-        HTTPMethods.indexOf(c.method) as Method,
-        c.path,
+        HTTPMethods.indexOf(ctx.method) as Method,
+        ctx.path,
       );
-      c.params = params; // Named parameters
+      ctx.params = params; // Named parameters
       try {
-        await handler(c);
+        await handler(ctx);
       } catch (e) {
         log.error(e);
       }
-      req.respond(c.response);
+      req.respond(ctx.response);
     }
   }
 
@@ -70,92 +70,52 @@ export class Application {
     this.#server?.close();
   }
 
-  get(
-    path: string,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Application {
+  get(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
     this.addPath(path, Method.GET, handler, ...middlewares);
     return this;
   }
 
-  post(
-    path: string,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Application {
+  post(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
     this.addPath(path, Method.POST, handler, ...middlewares);
     return this;
   }
 
-  put(
-    path: string,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Application {
+  put(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
     this.addPath(path, Method.PUT, handler, ...middlewares);
     return this;
   }
 
-  delete(
-    path: string,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Application {
+  delete(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
     this.addPath(path, Method.DELETE, handler, ...middlewares);
     return this;
   }
 
-  trace(
-    path: string,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Application {
+  trace(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
     this.addPath(path, Method.TRACE, handler, ...middlewares);
     return this;
   }
 
-  options(
-    path: string,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Application {
+  options(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
     this.addPath(path, Method.OPTIONS, handler, ...middlewares);
     return this;
   }
 
-  patch(
-    path: string,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Application {
+  patch(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
     this.addPath(path, Method.PATCH, handler, ...middlewares);
     return this;
   }
 
-  connect(
-    path: string,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Application {
+  connect(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
     this.addPath(path, Method.CONNECT, handler, ...middlewares);
     return this;
   }
 
-  head(
-    path: string,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Application {
+  head(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
     this.addPath(path, Method.HEAD, handler, ...middlewares);
     return this;
   }
 
-  any(
-    path: string,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Application {
+  any(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
     const methods = Object.values(Method).filter((n) => typeof n === "number");
     for (const method of methods) {
       this.addPath(path, method as Method, handler, ...middlewares);
@@ -163,32 +123,27 @@ export class Application {
     return this;
   }
 
-  file(path: string, file: string, ...middlewares: Middleware[]): Application {
+  file(path: string, file: string, ...middlewares: Middleware[]): YADWF {
     this.addPath(
       path,
       Method.GET,
-      async (c) => await c.file(file),
+      async (ctx) => await ctx.file(file),
       ...middlewares,
     );
     return this;
   }
 
-  static(
-    path: string,
-    directory: string,
-    ...middlewares: Middleware[]
-  ): Application {
+  static(path: string, directory: string, ...middlewares: Middleware[]): YADWF {
     if (!path.endsWith("/")) path += "/";
-    (async () => {
-      const directories = await getNestedDirectories(directory);
+    getNestedDirectories(directory).then((directories) => {
       directories.push("");
       for (const dir of directories) {
-        const hdl = async (c: Context) => {
-          const file = c.path.substring(join(path, dir, sep).length);
+        const hdl = async (ctx: Context) => {
+          const file = ctx.path.substring(join(path, dir, sep).length);
           if (file.length === 0) {
-            return await c.file(join(directory, dir, "index.html"));
+            return await ctx.file(join(directory, dir, "index.html"));
           }
-          return await c.file(join(directory, dir, file));
+          return await ctx.file(join(directory, dir, file));
         };
         this.addPath(
           `${path + dir}/*`.replace(/\/+/, "/"),
@@ -197,7 +152,7 @@ export class Application {
           ...middlewares,
         );
       }
-    })();
+    });
     return this;
   }
 }
