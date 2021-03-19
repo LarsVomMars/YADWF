@@ -18,4 +18,5 @@ export const extensions: Record<string, string> = {
   ".pdf": `application/pdf;${utf8}`,
   ".svg": `image/svg+xml`,
   ".json": `application/json;${utf8}`,
+  ".txt": `text/plain;${utf8}`,
 };
