@@ -5,7 +5,7 @@
 ## Initial setup
 
 ```ts
-import { YADWF } from "https://deno.land/x/yadwf@v0.2/mod.ts";
+import { YADWF } from "https://deno.land/x/yadwf@v0.3/mod.ts";
 
 const app = new YADWF();
 
