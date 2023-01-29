@@ -1,3 +1,5 @@
+import { Method } from "../router/method.ts";
+
 export default class Context {
   #request: Request;
 
@@ -29,12 +31,22 @@ export default class Context {
     return new Response(this.#message, options);
   }
 
+  get method(): Method {
+    return Method[this.#request.method.toUpperCase() as keyof typeof Method];
+  }
+
+  get path(): string {
+    return this.#url.pathname;
+  }
+
   public status(code: number, text?: string): Context {
     this.#status = code;
     if (text) this.#statusText = text;
     return this;
   }
 
+
+  
   public json(data: unknown): Context {
     this.#headers.set("Content-Type", "application/json");
     this.#message = JSON.stringify(data);
