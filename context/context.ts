@@ -45,8 +45,6 @@ export default class Context {
     return this;
   }
 
-
-  
   public json(data: unknown): Context {
     this.#headers.set("Content-Type", "application/json");
     this.#message = JSON.stringify(data);

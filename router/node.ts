@@ -1,4 +1,4 @@
-import { Method, type Handler } from "./mod.ts";
+import { type Handler, Method } from "./mod.ts";
 
 export default class Node {
   readonly #children: Map<string, Node>;
