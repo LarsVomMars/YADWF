@@ -36,12 +36,12 @@ export default class Node {
     }
     const child = this.#children.get(path);
     let handler: HandlerResult;
-    if (!child) {
+    if (child) {
+      handler = child.find(method, paths);
+    } else {
       const wildcard = this.#children.get("*");
       if (!wildcard) return EMPTY_HANDLER;
       handler = wildcard.find(method, paths);
-    } else {
-      handler = child.find(method, paths);
     }
     if (this.#param !== undefined) handler.params[this.#param] = path;
     return handler;

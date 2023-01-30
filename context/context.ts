@@ -1,4 +1,4 @@
-import { Status, STATUS_TEXT } from "../deps.ts";
+import { Status, STATUS_TEXT } from "http";
 import { Method } from "../router/method.ts";
 
 export default class Context {
@@ -53,6 +53,31 @@ export default class Context {
     return this.#params!;
   }
 
+  get query(): Record<string, unknown | unknown[]> {
+    const query: Record<string, unknown | unknown[]> = {};
+    for (const [key, value] of this.#url.searchParams) {
+      let val = value;
+      // Automatically convert query parameters to corresponding types
+      // TODO: Find a way to do this without try-catch
+      try {
+        val = JSON.parse(value);
+      } catch (_) {
+        // Do nothing
+      }
+      if (Object.prototype.hasOwnProperty.call(query, key)) {
+        if (Array.isArray(query[key])) {
+          (query[key] as unknown[]).push(val);
+        } else {
+          query[key] = [query[key] as unknown, val];
+        }
+      } else {
+        query[key] = val;
+      }
+    }
+    console.log(query);
+    return query;
+  }
+
   public status(code: number, text?: string): Context;
   public status(code: Status, text?: string): Context {
     this.#status = code;
@@ -67,6 +92,7 @@ export default class Context {
     return this;
   }
 
+  // TODO: Consider any and toString
   public text(data: string): Context {
     this.#headers.set("Content-Type", "text/plain");
     this.#message = data;
