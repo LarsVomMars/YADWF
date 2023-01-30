@@ -2,7 +2,7 @@ import { Context } from "../context/mod.ts";
 import Node from "./node.ts";
 import { getPaths } from "../util.ts";
 import { Handler, NotFoundHandler } from "./handler.ts";
-import { Method } from "./method.ts";
+import type { Method } from "./method.ts";
 
 export default class Router {
   #root: Node;
@@ -19,7 +19,8 @@ export default class Router {
     const { method, path } = context;
     console.log(method, path);
     const paths = getPaths(path);
-    const node = this.#root.find(method, paths);
-    return node ?? NotFoundHandler;
+    const { handler, params } = this.#root.find(method, paths);
+    context.params = params;
+    return handler ?? NotFoundHandler;
   }
 }

@@ -1,3 +1,4 @@
+import { Status, STATUS_TEXT } from "../deps.ts";
 import { Method } from "../router/method.ts";
 
 export default class Context {
@@ -5,16 +6,17 @@ export default class Context {
 
   #message: string;
   #headers: Headers;
-  #status: number;
+  #status: Status;
   #statusText: string;
   #url: URL;
+  #params: Record<string, string> | undefined;
 
   constructor(req: Request) {
     this.#request = req;
     this.#message = "";
     this.#headers = new Headers();
-    this.#status = 200;
-    this.#statusText = "OK";
+    this.#status = Status.OK;
+    this.#statusText = STATUS_TEXT[Status.OK];
     this.#url = new URL(req.url);
   }
 
@@ -39,9 +41,23 @@ export default class Context {
     return this.#url.pathname;
   }
 
-  public status(code: number, text?: string): Context {
+  set params(params: Record<string, string>) {
+    // Disable editing of params
+    // TODO: Move to constructor somehow
+    if (this.#params) throw new Error("Params already set");
+    this.#params = params;
+  }
+
+  get params(): Record<string, string> {
+    // Is always set by setter
+    return this.#params!;
+  }
+
+  public status(code: number, text?: string): Context;
+  public status(code: Status, text?: string): Context {
     this.#status = code;
     if (text) this.#statusText = text;
+    else this.#statusText = STATUS_TEXT[code];
     return this;
   }
 
@@ -54,6 +70,13 @@ export default class Context {
   public text(data: string): Context {
     this.#headers.set("Content-Type", "text/plain");
     this.#message = data;
+    return this;
+  }
+
+  public redirect(url: string): Context {
+    // TODO: Test
+    // TODO: Consider adding status code
+    this.#headers.append("Location", url);
     return this;
   }
 }
