@@ -2,7 +2,7 @@ import { Status, STATUS_TEXT } from "http";
 import type { Context } from "../context/mod.ts";
 
 export type Handler = (
-  context: Context
+  context: Context,
 ) => Promise<void | Context> | void | Context;
 
 export function NotFoundHandler(ctx: Context) {
@@ -17,7 +17,7 @@ export type HandlerResult = {
 export const EMPTY_HANDLER: HandlerResult = { handler: undefined, params: {} };
 export function makeHandlerResult(
   handler: Handler | undefined,
-  params: Record<string, string> = {}
+  params: Record<string, string> = {},
 ): HandlerResult {
   return { handler, params };
 }
