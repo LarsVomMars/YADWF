@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "http": "https://deno.land/std@0.175.0/http/mod.ts"
+  }
+}

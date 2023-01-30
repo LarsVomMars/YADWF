@@ -1,176 +1,67 @@
-import { Context } from "./context.ts";
-import { HTTPMethods, Method, Router } from "./router.ts";
-import {
-  format as timeFormat,
-  HTTPOptions,
-  join,
-  log,
-  sep,
-  serve,
-  Server,
-} from "./deps.ts";
-import { getNestedDirectories } from "./util.ts";
+import { serve, type ServeInit } from "http";
+import { Handler, Method, Router } from "./router/mod.ts";
+import { Context } from "./context/mod.ts";
 
-export type Handler = (ctx: Context) => Promise<void> | void;
-export type Middleware = (next: Handler) => Handler;
-
-export class YADWF {
-  #server?: Server;
+export default class YADWF {
   #router: Router;
-
   constructor() {
     this.#router = new Router();
   }
 
-  private async startServer(server: Server) {
-    this.#server = server;
-    for await (const req of this.#server) {
-      const ctx = new Context(req);
-      log.info(`${ctx.protocol} ${ctx.method} ${ctx.path}`);
-      const { handler, params } = this.#router.find(
-        HTTPMethods.indexOf(ctx.method) as Method,
-        ctx.path,
-      );
-      ctx.params = params; // Named parameters
-      try {
-        await handler(ctx);
-      } catch (e) {
-        log.error(e);
-      }
-      req.respond(ctx.response);
-    }
+  public async start(options?: ServeInit) {
+    await serve(async (req: Request) => {
+      const context = new Context(req);
+      const handler = this.#router.find(context);
+      await handler(context);
+      return context.response;
+    }, options);
   }
 
-  private applyMiddleware(
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ): Handler {
-    for (const middleware of middlewares) {
-      handler = middleware(handler);
-    }
-    return handler;
-  }
-
-  private addPath(
-    path: string,
-    method: Method,
-    handler: Handler,
-    ...middlewares: Middleware[]
-  ) {
-    handler = this.applyMiddleware(handler, ...middlewares);
+  private addPath(method: Method, path: string, handler: Handler): YADWF {
     this.#router.add(method, path, handler);
-  }
-
-  start(options: HTTPOptions) {
-    log.info(`Server started: http://localhost:${options.port}`);
-    this.startServer(serve(options));
-  }
-
-  stop() {
-    this.#server?.close();
-  }
-
-  get(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
-    this.addPath(path, Method.GET, handler, ...middlewares);
     return this;
   }
 
-  post(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
-    this.addPath(path, Method.POST, handler, ...middlewares);
-    return this;
+  public get(path: string, handler: Handler): YADWF {
+    return this.addPath(Method.GET, path, handler);
   }
 
-  put(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
-    this.addPath(path, Method.PUT, handler, ...middlewares);
-    return this;
+  public post(path: string, handler: Handler): YADWF {
+    return this.addPath(Method.POST, path, handler);
   }
 
-  delete(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
-    this.addPath(path, Method.DELETE, handler, ...middlewares);
-    return this;
+  public put(path: string, handler: Handler): YADWF {
+    return this.addPath(Method.PUT, path, handler);
   }
 
-  trace(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
-    this.addPath(path, Method.TRACE, handler, ...middlewares);
-    return this;
+  public delete(path: string, handler: Handler): YADWF {
+    return this.addPath(Method.DELETE, path, handler);
   }
 
-  options(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
-    this.addPath(path, Method.OPTIONS, handler, ...middlewares);
-    return this;
+  public patch(path: string, handler: Handler): YADWF {
+    return this.addPath(Method.PATCH, path, handler);
   }
 
-  patch(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
-    this.addPath(path, Method.PATCH, handler, ...middlewares);
-    return this;
+  public head(path: string, handler: Handler): YADWF {
+    return this.addPath(Method.HEAD, path, handler);
   }
 
-  connect(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
-    this.addPath(path, Method.CONNECT, handler, ...middlewares);
-    return this;
+  public options(path: string, handler: Handler): YADWF {
+    return this.addPath(Method.OPTIONS, path, handler);
   }
 
-  head(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
-    this.addPath(path, Method.HEAD, handler, ...middlewares);
-    return this;
+  public connect(path: string, handler: Handler): YADWF {
+    return this.addPath(Method.CONNECT, path, handler);
   }
 
-  any(path: string, handler: Handler, ...middlewares: Middleware[]): YADWF {
-    const methods = Object.values(Method).filter((n) => typeof n === "number");
-    for (const method of methods) {
-      this.addPath(path, method as Method, handler, ...middlewares);
+  public trace(path: string, handler: Handler): YADWF {
+    return this.addPath(Method.TRACE, path, handler);
+  }
+
+  public any(path: string, handler: Handler): YADWF {
+    for (const method in Method) {
+      this.addPath(method as Method, path, handler);
     }
-    return this;
-  }
-
-  file(path: string, file: string, ...middlewares: Middleware[]): YADWF {
-    this.addPath(
-      path,
-      Method.GET,
-      async (ctx) => await ctx.file(file),
-      ...middlewares,
-    );
-    return this;
-  }
-
-  static(path: string, directory: string, ...middlewares: Middleware[]): YADWF {
-    if (!path.endsWith("/")) path += "/";
-    getNestedDirectories(directory).then((directories) => {
-      directories.push("");
-      for (const dir of directories) {
-        const hdl = async (ctx: Context) => {
-          const file = ctx.path.substring(join(path, dir, sep).length);
-          if (file.length === 0) {
-            return await ctx.file(join(directory, dir, "index.html"));
-          }
-          return await ctx.file(join(directory, dir, file));
-        };
-        this.addPath(
-          `${path + dir}/*`.replace(/\/+/, "/"),
-          Method.GET,
-          hdl,
-          ...middlewares,
-        );
-      }
-    });
     return this;
   }
 }
-
-// Logging
-await log.setup({
-  handlers: {
-    timeHandler: new log.handlers.ConsoleHandler("INFO", {
-      formatter: (logRecord) =>
-        `[${
-          timeFormat(new Date(Date.now()), "MM-dd-yyyy HH:mm:ss")
-        }] ${logRecord.msg}`,
-    }),
-  },
-  loggers: {
-    default: {
-      level: "INFO",
-      handlers: ["timeHandler"],
-    },
-  },
-});
