@@ -1,4 +1,4 @@
-import { Status, STATUS_TEXT } from "http";
+import { STATUS_CODE, STATUS_TEXT } from "@std/http";
 import type { Context } from "../context/mod.ts";
 
 export type Handler = (
@@ -6,7 +6,7 @@ export type Handler = (
 ) => Promise<void | Context> | void | Context;
 
 export function NotFoundHandler(ctx: Context) {
-  ctx.status(Status.NotFound).text(STATUS_TEXT[Status.NotFound]);
+  ctx.status(STATUS_CODE.NotFound).text(STATUS_TEXT[STATUS_CODE.NotFound]);
 }
 
 export type HandlerResult = {
@@ -15,9 +15,3 @@ export type HandlerResult = {
 };
 
 export const EMPTY_HANDLER: HandlerResult = { handler: undefined, params: {} };
-export function makeHandlerResult(
-  handler: Handler | undefined,
-  params: Record<string, string> = {},
-): HandlerResult {
-  return { handler, params };
-}

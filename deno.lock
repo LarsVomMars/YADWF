@@ -1,0 +1,61 @@
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/async@^1.0.0-rc.1": "jsr:@std/async@1.0.0-rc.2",
+      "jsr:@std/cli@^0.224.7": "jsr:@std/cli@0.224.7",
+      "jsr:@std/encoding@1.0.0-rc.2": "jsr:@std/encoding@1.0.0-rc.2",
+      "jsr:@std/fmt@^0.225.4": "jsr:@std/fmt@0.225.4",
+      "jsr:@std/http@^0.224.5": "jsr:@std/http@0.224.5",
+      "jsr:@std/media-types@^1.0.0-rc.1": "jsr:@std/media-types@1.0.0-rc.1",
+      "jsr:@std/net@^0.224.3": "jsr:@std/net@0.224.3",
+      "jsr:@std/path@1.0.0-rc.2": "jsr:@std/path@1.0.0-rc.2",
+      "jsr:@std/streams@^0.224.5": "jsr:@std/streams@0.224.5"
+    },
+    "jsr": {
+      "@std/async@1.0.0-rc.2": {
+        "integrity": "f3fe96c78e85c180fe31c3248da2e32d17f7e90ce5fe2765eb7c18861eaf13e1"
+      },
+      "@std/cli@0.224.7": {
+        "integrity": "654ca6477518e5e3a0d3fabafb2789e92b8c0febf1a1d24ba4b567aba94b5977"
+      },
+      "@std/encoding@1.0.0-rc.2": {
+        "integrity": "160d7674a20ebfbccdf610b3801fee91cf6e42d1c106dd46bbaf46e395cd35ef"
+      },
+      "@std/fmt@0.225.4": {
+        "integrity": "584c681cf422b70e28959b57e59012823609c087384cbf12d05f67814797fda3"
+      },
+      "@std/http@0.224.5": {
+        "integrity": "b03b5d1529f6c423badfb82f6640f9f2557b4034cd7c30655ba5bb447ff750a4",
+        "dependencies": [
+          "jsr:@std/async@^1.0.0-rc.1",
+          "jsr:@std/cli@^0.224.7",
+          "jsr:@std/encoding@1.0.0-rc.2",
+          "jsr:@std/fmt@^0.225.4",
+          "jsr:@std/media-types@^1.0.0-rc.1",
+          "jsr:@std/net@^0.224.3",
+          "jsr:@std/path@1.0.0-rc.2",
+          "jsr:@std/streams@^0.224.5"
+        ]
+      },
+      "@std/media-types@1.0.0-rc.1": {
+        "integrity": "ff3cc8d5b536be2730fc4d446865007faf69bf4d46e7bea426d5e1d9c6ba9053"
+      },
+      "@std/net@0.224.3": {
+        "integrity": "a6257b9a35a4f299a0a9d4a4b76aef1f90ad05572374c5267c6c51a2ec41dfba"
+      },
+      "@std/path@1.0.0-rc.2": {
+        "integrity": "39f20d37a44d1867abac8d91c169359ea6e942237a45a99ee1e091b32b921c7d"
+      },
+      "@std/streams@0.224.5": {
+        "integrity": "bcde7818dd5460d474cdbd674b15f6638b9cd73cd64e52bd852fba2bd4d8ec91"
+      }
+    }
+  },
+  "remote": {},
+  "workspace": {
+    "dependencies": [
+      "jsr:@std/http@^0.224.5"
+    ]
+  }
+}

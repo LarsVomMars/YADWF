@@ -1,4 +1,4 @@
-import { EMPTY_HANDLER, HandlerResult, makeHandlerResult } from "./handler.ts";
+import { EMPTY_HANDLER, HandlerResult } from "./handler.ts";
 import { type Handler, Method } from "./mod.ts";
 
 export default class Node {
@@ -32,7 +32,7 @@ export default class Node {
     const path = paths.shift();
     if (path === undefined) {
       const handler = this.#handlers.get(method);
-      return makeHandlerResult(handler);
+      return { handler, params: {} };
     }
     const child = this.#children.get(path);
     let handler: HandlerResult;

@@ -1,4 +1,4 @@
-import { serve, type ServeInit } from "http";
+// import { serve, type ServeInit } from "@std/http";
 import { Handler, Method, Router } from "./router/mod.ts";
 import { Context } from "./context/mod.ts";
 
@@ -8,13 +8,13 @@ export default class YADWF {
     this.#router = new Router();
   }
 
-  public async start(options?: ServeInit) {
-    await serve(async (req: Request) => {
+  public start(options: Deno.ServeOptions = {}) {
+    Deno.serve(options, async (req: Request) => {
       const context = new Context(req);
       const handler = this.#router.find(context);
       await handler(context);
       return context.response;
-    }, options);
+    });
   }
 
   private addPath(method: Method, path: string, handler: Handler): YADWF {

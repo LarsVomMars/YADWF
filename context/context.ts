@@ -1,4 +1,4 @@
-import { Status, STATUS_TEXT } from "http";
+import { STATUS_CODE, STATUS_TEXT, type StatusCode } from "@std/http";
 import { Method } from "../router/method.ts";
 
 export default class Context {
@@ -6,7 +6,7 @@ export default class Context {
 
   #message: string;
   #headers: Headers;
-  #status: Status;
+  #status: StatusCode;
   #statusText: string;
   #url: URL;
   #params: Record<string, string> | undefined;
@@ -15,8 +15,8 @@ export default class Context {
     this.#request = req;
     this.#message = "";
     this.#headers = new Headers();
-    this.#status = Status.OK;
-    this.#statusText = STATUS_TEXT[Status.OK];
+    this.#status = STATUS_CODE.OK;
+    this.#statusText = STATUS_TEXT[STATUS_CODE.OK];
     this.#url = new URL(req.url);
   }
 
@@ -79,10 +79,13 @@ export default class Context {
   }
 
   public status(code: number, text?: string): Context;
-  public status(code: Status, text?: string): Context {
+  public status(code: StatusCode, text?: string): Context {
     this.#status = code;
-    if (text) this.#statusText = text;
-    else this.#statusText = STATUS_TEXT[code];
+    if (text) {
+      this.#statusText = text;
+    } else {
+      this.#statusText = STATUS_TEXT[STATUS_CODE.OK];
+    }
     return this;
   }
 
