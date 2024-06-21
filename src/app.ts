@@ -1,5 +1,4 @@
-// import { serve, type ServeInit } from "@std/http";
-import { Handler, Method, Router } from "./router/mod.ts";
+import { type Handler, Method, Router } from "./router/mod.ts";
 import { Context } from "./context/mod.ts";
 
 export default class YADWF {

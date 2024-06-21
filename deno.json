@@ -1,4 +1,7 @@
 {
+  "name": "@larsvommars/yadwf",
+  "version": "0.1.0",
+  "exports": "./src/mod.ts",
   "imports": {
     "@std/http": "jsr:@std/http@^0.224.5"
   }

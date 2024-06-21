@@ -1,5 +1,5 @@
-import { EMPTY_HANDLER, HandlerResult } from "./handler.ts";
-import { type Handler, Method } from "./mod.ts";
+import { EMPTY_HANDLER, type HandlerResult } from "./handler.ts";
+import type { Handler, Method } from "./mod.ts";
 
 export default class Node {
   readonly #children: Map<string, Node>;

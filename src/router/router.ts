@@ -1,7 +1,7 @@
-import { Context } from "../context/mod.ts";
+import type { Context } from "../context/mod.ts";
 import Node from "./node.ts";
-import { getPaths } from "../util.ts";
-import { Handler, NotFoundHandler } from "./handler.ts";
+import { getPaths } from "../utils/mod.ts";
+import { type Handler, NotFoundHandler } from "./handler.ts";
 import type { Method } from "./method.ts";
 
 export default class Router {

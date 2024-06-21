@@ -34,7 +34,7 @@ export default class Context {
   }
 
   get method(): Method {
-    return Method[this.#request.method.toUpperCase() as keyof typeof Method];
+    return Method[this.#request.method.toUpperCase() as Method];
   }
 
   get path(): string {
